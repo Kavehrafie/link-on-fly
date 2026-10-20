@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "link-on-fly",
   "main": "src/index.ts",
-  "compatibility_date": "2026-10-20"
+  "compatibility_date": "2026-10-20",
   // "compatibility_flags": [
   //   "nodejs_compat"
   // ],
@@ -35,4 +35,7 @@
   //   "enabled": true,
   //   "head_sampling_rate": 1
   // }
+  "rules": [
+    {"type": "Text", "globs": ["**/*.yaml"]}
+  ]
 }

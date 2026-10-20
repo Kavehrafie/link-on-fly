@@ -10,6 +10,7 @@
     "hono": "^4.13.13"
   },
   "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
     "wrangler": "^4.110.0"
   }
 }
