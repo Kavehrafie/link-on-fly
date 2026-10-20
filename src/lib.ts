@@ -1,65 +1,40 @@
 type Branch = {
-  title: string
-  slug: string
-  description?: string
-  children: (Branch | Leaf)[]
-}
+  title: string;
+  slug: string;
+  description?: string;
+  children: (Branch | Leaf)[];
+};
 
 type Leaf = {
-  title: string
-  slug: string
-  description?: string
-  targets: { type: 'r2bucket' | "url"; name: string }[]
+  title: string;
+  slug: string;
+  description?: string;
+  targets: { type: "r2" | "url"; name: string }[];
+};
+
+type Node = Branch | Leaf;
+type FlatTree = Map<string, Leaf>;
+
+function flattenTree(tree: Node[], prefix: string = ""): FlatTree {
+  let flatTree = new Map<string, Leaf>();
+
+  walkIntoTree(tree, prefix, (leaf) => {
+    flatTree.set(`${prefix}${leaf.slug}`, leaf);
+  });
+
+  return flatTree;
 }
 
-/**
- * Turns a tree structure into an array of objects.
- * @param tree Object tree with object entries attached by their IDs as keys.
- * @returns Array of objects entries with their IDs embedded in their structure
- * @example
- * // given a tree:
- * {
- *   'a': {
- *     label: 'A', id: 'a', children: {
- *       'a|b': {
- *         label: 'B', id: 'a|b', children: {
- *           'a|b|c': { label: 'C', id: 'a|b|c' },
- *           'a|b|d': { label: 'D', id: 'a|b|d' }
- *         }
- *       },
- *       'a|x': { label: 'X', id: 'a|x' }
- *     }
- *   },
- *   't': { label: 'T', id: 't' }
- * }
- *
- * // returns:
- * [
- *   {
- *     label: 'A', id: 'a', children: [
- *       {
- *         label: 'B', id: 'a|b', children: [
- *           { label: 'C', id: 'a|b|c' },
- *           { label: 'D', id: 'a|b|d' }
- *         ]
- *       },
- *       { label: 'X', id: 'a|x' }
- *     ]
- *   },
- *   { label: 'T', id: 't' }
- * ]
- */
-function flattenTree(tree) {
-  let flatTree = [];
-  if (tree) {
-    for (let key in tree) {
-      const node = tree[key];
-      node.id = key;
-      if (node.children) {
-        node.children = flattenTree(node.children);
-      }
-      flatTree.push(node);
+function walkIntoTree(
+  tree: Node[],
+  prefix: string = "",
+  callback: (leaf: Leaf) => void,
+) {
+  for (const node of tree) {
+    if ("children" in node) {
+      walkIntoTree(node.children, `${prefix}${node.slug}/`, callback);
+    } else {
+      callback(node);
     }
   }
-  return flatTree;
 }

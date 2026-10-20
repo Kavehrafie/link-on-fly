@@ -6,9 +6,9 @@ children:
     slug: midterm-exam
     description: A link to the midterm exam for the ah1105 course in the fall of 2026.
     targets:
-      - type: r2bucket
+      - type: r2
         name: exam-set-a.pdf
-      - type: r2object
+      - type: r2
         name: exam-set-b.pdf
-      - type: r2object
+      - type: r2
         name: exam-set-c.pdf

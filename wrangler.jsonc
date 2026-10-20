@@ -36,6 +36,6 @@
   //   "head_sampling_rate": 1
   // }
   "rules": [
-    {"type": "Text", "globs": ["**/*.yaml"]}
+    {"type": "Text", "globs": ["**/*.yaml"], "fallthrough": true}
   ]
 }
