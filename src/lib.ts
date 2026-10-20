@@ -1,3 +1,17 @@
+type Branch = {
+  title: string
+  slug: string
+  description?: string
+  children: (Branch | Leaf)[]
+}
+
+type Leaf = {
+  title: string
+  slug: string
+  description?: string
+  targets: { type: 'r2bucket' | "url"; name: string }[]
+}
+
 /**
  * Turns a tree structure into an array of objects.
  * @param tree Object tree with object entries attached by their IDs as keys.
