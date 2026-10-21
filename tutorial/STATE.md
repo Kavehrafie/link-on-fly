@@ -16,8 +16,8 @@ A Cloudflare Worker (Hono) that serves as an access point to assets/links. Real 
 ## Lesson roadmap
 
 0. ✅ Template, Hono mental model, status experiments — notes in `tutorial/00-mental-model.md`.
-1. **🔄 IN PROGRESS** — tree config, recursive types, boot-time flatten to Map, catch-all `app.get('*')` route, 404 for containers/unknown, serve `targets[0]` (url → 302 redirect; r2object → 501 placeholder until Lesson 3). User was extracting tree logic into `src/lib.ts`.
-2. Multiple targets, sticky per visitor (`hono/cookie`, pick-target pure function, per-slug cookies).
+1. ✅ DONE (2026-10-20) — yaml tree (array root, depth-3), Text rule import, module-scope parse+flatten, catch-all route, inline 404 page / 302 url / 501 r2 placeholder. Notes: `tutorial/01-config-tree-and-serving.md`. Conventions: Map keys carry leading `/` (match `c.req.path`); r2 targets use `name:`, url use `src:`; Target union lives in lib.ts; env.d.ts gone (worker-configuration.d.ts covers yaml declarations).
+2. **🔄 IN PROGRESS** — Multiple targets, sticky per visitor (`hono/cookie`, pick-target pure function, per-slug cookies).
 3. R2: binding in wrangler.jsonc, `wrangler types`, typed `Hono<{ Bindings }>` (Bindings via `c.env`), stream objects, Content-Type/Disposition.
 4. Middleware: expiry check → 410; custom middleware, ordering, `c.set/c.get`.
 5. hono/jsx pages (Layout, ExpiredPage, NotFoundPage) — tsconfig already has `jsxImportSource: hono/jsx`.
@@ -26,13 +26,18 @@ A Cloudflare Worker (Hono) that serves as an access point to assets/links. Real 
 8. Logging: `hono/logger`, `wrangler tail`, observability config.
 9. Deploy: wrangler deploy, prod R2 + secrets, custom domain, Cache-Control policy.
 
-## Lesson 1 — still owed by the user
+## Lesson 2 — in progress (opened 2026-10-20)
 
-- Fix links.yaml: `targets` plural, consistent `r2object`, add a `resources` leaf with 2–3 url targets (so lessons 1–2 test without R2).
-- `src/env.d.ts` ambient declaration for `*.yaml` imports; js-yaml + @types/js-yaml installed; wrangler.jsonc `rules: [{ type: "Text", globs: ["**/*.yaml"] }]`.
-- Recursive types (Target discriminated union; Node = Branch | Leaf via field presence), `flattenTree()` in `src/lib.ts`, catch-all route, trailing-slash policy decision.
-- **Three questions they must answer:** (1) why must `/health` be registered before `*`? (2) trailing-slash policy — resolve or 404, and why; (3) where does a boot-time throw surface in `wrangler dev`?
-- Checkpoint curls: `/fall-2026/ah1105` → 404 (container), `/fall-2026/ah1105/resources` → 302, `/fall-2026/ah1105/midterm-exam` → 501, `/nonsense` → 404. Then review their `src/index.ts` + `src/lib.ts` + `links.yaml`, have them commit, write `tutorial/01-*.md` notes, update this file.
+Goal: exactly ONE target per visitor, sticky via cookie (exam-set use case). Current behavior: inline `Math.random` pick on EVERY request — non-sticky.
+
+User tasks:
+1. `pickTarget(targets: Target[], rng: () => number = Math.random): Target` — pure function in lib.ts; injectable rng → deterministic tests in Lesson 7. Export Target.
+2. Per-leaf cookie name derived from the path. Cookie names are RFC tokens: no `/`, no `:` — slugify (readable, devtools-friendly) or hash. Store the picked INDEX as the value; validate range on read (yaml edits shift indexes → re-pick on stale).
+3. Sticky flow in the handler: cookie hit + valid index → serve that target; miss/stale → pickTarget, setCookie, serve.
+4. Cookie attributes: httpOnly, sameSite: 'Lax', maxAge ~30d, path '/' (know Path-scoping exists).
+5. Replace inline Math.random with pickTarget call.
+
+Checkpoint: repeated curls (no jar) vary; with `curl -c jar -b jar` stable; two different paths stick independently in one jar.
 
 ## Session workflow
 

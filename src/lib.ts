@@ -5,12 +5,15 @@ type Branch = {
   children: (Branch | Leaf)[];
 };
 
+type Target = {type: "r2", name: string} | {type: "url", src: string};
+
 type Leaf = {
   title: string;
   slug: string;
   description?: string;
-  targets: { type: "r2" | "url"; name: string }[];
+  targets: Target[];
 };
+
 
 type Node = Branch | Leaf;
 type FlatTree = Map<string, Leaf>;
@@ -18,7 +21,7 @@ type FlatTree = Map<string, Leaf>;
 function flattenTree(tree: Node[], prefix: string = ""): FlatTree {
   let flatTree = new Map<string, Leaf>();
 
-  walkIntoTree(tree, prefix, (leaf) => {
+  walkIntoTree(tree, "/", (leaf, prefix) => {
     flatTree.set(`${prefix}${leaf.slug}`, leaf);
   });
 
@@ -28,13 +31,22 @@ function flattenTree(tree: Node[], prefix: string = ""): FlatTree {
 function walkIntoTree(
   tree: Node[],
   prefix: string = "",
-  callback: (leaf: Leaf) => void,
+  callback: (leaf: Leaf, prefix: string) => void,
 ) {
   for (const node of tree) {
     if ("children" in node) {
-      walkIntoTree(node.children, `${prefix}${node.slug}/`, callback);
+      walkIntoTree(node.children, prefix + node.slug + '/', callback);
     } else {
-      callback(node);
+      callback(node, prefix);
     }
   }
+}
+
+
+export {
+  flattenTree,
+  type Branch,
+  type Leaf,
+  type Node,
+  type FlatTree,
 }

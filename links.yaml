@@ -1,14 +1,28 @@
-title: ah1105-2026
-slug: fall-2026/ah1105
-description: A link to the ah1105 course in the fall of 2026.
-children:
-  - title: midterm exam
-    slug: midterm-exam
-    description: A link to the midterm exam for the ah1105 course in the fall of 2026.
-    targets:
-      - type: r2
-        name: exam-set-a.pdf
-      - type: r2
-        name: exam-set-b.pdf
-      - type: r2
-        name: exam-set-c.pdf
+- title: Fall 2026
+  slug: fall-2026
+  description: A link to the ah1105 course in the fall of 2026.
+  children:
+    - title: ah1105
+      slug: ah1105
+      description: A link to the ah1105 course in the fall of 2026.
+      children:
+        - title: midterm exam
+          slug: midterm-exam
+          description: A link to the midterm exam for the ah1105 course in the fall of 2026.
+          targets:
+            - type: r2
+              name: exam-set-a.pdf
+            - type: r2
+              name: exam-set-b.pdf
+            - type: r2
+              name: exam-set-c.pdf
+        - title: course resources
+          slug: resources
+          description: Useful external resources for the ah1105 course.
+          targets:
+            - type: url
+              src: https://hono.dev/docs/
+            - type: url
+              src: https://developers.cloudflare.com/workers/
+            - type: url
+              src: https://developer.mozilla.org/en-US/docs/Web
