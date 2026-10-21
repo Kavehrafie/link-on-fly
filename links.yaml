@@ -16,6 +16,9 @@
               name: exam-set-b.pdf
             - type: r2
               name: exam-set-c.pdf
+            # test fixture for the missing-object → 404 checkpoint; safe to delete
+            - type: r2
+              name: exam-set-missing.pdf
         - title: course resources
           slug: resources
           description: Useful external resources for the ah1105 course.
@@ -26,3 +29,11 @@
               src: https://developers.cloudflare.com/workers/
             - type: url
               src: https://developer.mozilla.org/en-US/docs/Web
+        # test fixture for the 410 Gone checkpoint; safe to delete
+        - title: archived exam (expired)
+          slug: archived-exam
+          description: Expired on purpose so the 410 path can be tested.
+          expires: 2020-01-01
+          targets:
+            - type: url
+              src: https://example.com/archived

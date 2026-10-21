@@ -11,6 +11,7 @@ type Leaf = {
   title: string;
   slug: string;
   description?: string;
+  expires?: Date | string; // js-yaml parses ISO dates into Date instances — handle both
   targets: Target[];
 };
 
@@ -42,8 +43,16 @@ function walkIntoTree(
   }
 }
 
+function pickTargetIndex(targets: Target[], rng: () => number = Math.random): number {
+  if (targets.length === 0) {
+    throw new Error("No targets available to pick from.");
+  }
+  return Math.floor(rng() * targets.length);
+}
 
 export {
+  pickTargetIndex,
+  type Target,
   flattenTree,
   type Branch,
   type Leaf,

@@ -17,27 +17,25 @@ A Cloudflare Worker (Hono) that serves as an access point to assets/links. Real 
 
 0. ✅ Template, Hono mental model, status experiments — notes in `tutorial/00-mental-model.md`.
 1. ✅ DONE (2026-10-20) — yaml tree (array root, depth-3), Text rule import, module-scope parse+flatten, catch-all route, inline 404 page / 302 url / 501 r2 placeholder. Notes: `tutorial/01-config-tree-and-serving.md`. Conventions: Map keys carry leading `/` (match `c.req.path`); r2 targets use `name:`, url use `src:`; Target union lives in lib.ts; env.d.ts gone (worker-configuration.d.ts covers yaml declarations).
-2. **🔄 IN PROGRESS** — Multiple targets, sticky per visitor (`hono/cookie`, pick-target pure function, per-slug cookies).
-3. R2: binding in wrangler.jsonc, `wrangler types`, typed `Hono<{ Bindings }>` (Bindings via `c.env`), stream objects, Content-Type/Disposition.
-4. Middleware: expiry check → 410; custom middleware, ordering, `c.set/c.get`.
+2. ✅ DONE (2026-10-20) — sticky per-visitor target: pure `pickTargetIndex` (injectable rng), per-path cookie name (slugified FULL path — leaf.slug alone collides), index-as-value with range re-validation (stale → re-pick). Notes: `tutorial/02-sticky-targets.md`.
+3. ✅ DONE (2026-10-20) — R2 serving (binding `teaching_resc`, bucket `teaching-resc`), sync script (`bun run sync:r2`, `--remote` flag), typed Hono generic, streaming + Content-Type/Disposition. Notes: `tutorial/03-r2-and-expiry.md`.
+4. 🔀 ABSORBED into the R2 stage — expiry middleware (410), middleware short-circuit, `c.set`/`c.get` with `Variables` generic. Ordering experiments + `createMiddleware` deferred to Lesson 6 (pass-key = second middleware).
 5. hono/jsx pages (Layout, ExpiredPage, NotFoundPage) — tsconfig already has `jsxImportSource: hono/jsx`.
 6. Pass-key bypass — OPEN DESIGN DECISION, discuss with user first (unlock semantics: listing page vs JSON vs cookie; key scope: per-leaf in YAML vs global secret vs both; timing-safe compare, wrangler secret, .dev.vars).
 7. Tests: `app.request()` + Vitest; `@cloudflare/vitest-pool-workers` for R2; inject clock/RNG.
 8. Logging: `hono/logger`, `wrangler tail`, observability config.
 9. Deploy: wrangler deploy, prod R2 + secrets, custom domain, Cache-Control policy.
 
-## Lesson 2 — in progress (opened 2026-10-20)
+## Stage status (after R2 + expiry stage, 2026-10-20)
 
-Goal: exactly ONE target per visitor, sticky via cookie (exam-set use case). Current behavior: inline `Math.random` pick on EVERY request — non-sticky.
+Current end state: guard middleware (lookup, 404/410 short-circuits, `c.set` stash) → serving handler (sticky cookie pick → url 302 / r2 stream with attachment headers). Sync script pushes uploads/ → bucket (`bun run sync:r2`, `--remote` for prod). Test fixtures in links.yaml: `archived-exam` (expired → 410) and `exam-set-missing.pdf` (missing object → 404) — removable once L7 tests exist.
 
-User tasks:
-1. `pickTarget(targets: Target[], rng: () => number = Math.random): Target` — pure function in lib.ts; injectable rng → deterministic tests in Lesson 7. Export Target.
-2. Per-leaf cookie name derived from the path. Cookie names are RFC tokens: no `/`, no `:` — slugify (readable, devtools-friendly) or hash. Store the picked INDEX as the value; validate range on read (yaml edits shift indexes → re-pick on stale).
-3. Sticky flow in the handler: cookie hit + valid index → serve that target; miss/stale → pickTarget, setCookie, serve.
-4. Cookie attributes: httpOnly, sameSite: 'Lax', maxAge ~30d, path '/' (know Path-scoping exists).
-5. Replace inline Math.random with pickTarget call.
+## Lesson 5 — next: hono/jsx pages
 
-Checkpoint: repeated curls (no jar) vary; with `curl -c jar -b jar` stable; two different paths stick independently in one jar.
+1. Replace the string-imported `404.html`/`410.html` with jsx components: Layout, NotFoundPage, GonePage.
+2. `jsxImportSource: hono/jsx` is already in tsconfig; SSR-only by default — no client runtime unless opted in.
+3. Same checkpoint table as `tutorial/03` must still pass, byte-for-byte behavior.
+4. Escaping is default-on; `raw()` only for deliberate html injection.
 
 ## Session workflow
 
