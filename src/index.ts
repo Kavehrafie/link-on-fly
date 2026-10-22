@@ -2,10 +2,12 @@ import { Hono } from "hono";
 import linksData from "../links.yaml";
 import page404 from "./404.html";
 import page410 from "./410.html";
+import page425 from "./425.html";
 import { load } from "js-yaml";
-import { flattenTree, pickTargetIndex, type FlatTree, type Leaf, type Node } from "./lib";
+import { flattenTree, pickTargetIndex } from "./lib";
+import { linksSchema, type FlatTree, type Leaf, type Node } from "./schema";
 import { getCookie, setCookie } from "hono/cookie";
-
+import z from "zod"
 const MIME: Record<string, string> = {
   pdf: "application/pdf",
   txt: "text/plain",
@@ -17,7 +19,12 @@ const app = new Hono<{
   Variables: { leaf: Leaf; path: string };
 }>();
 
-const routes: FlatTree = flattenTree(load(linksData) as Node[]);
+try {
+  const tree = z.parse(linksSchema, load(linksData))
+} catch (e) {
+  throw z.prettifyError(e)
+}
+const routes: FlatTree = flattenTree(tree);
 
 // Guard middleware: one lookup, then the short-circuits. Returning without
 // calling next() ends the request here — the handler never runs.
@@ -26,10 +33,18 @@ app.use("*", async (c, next) => {
   const leaf = routes.get(path);
   if (!leaf) return c.html(page404, 404);
 
-  // js-yaml turns `expires: 2020-01-01` into a Date instance; yaml strings stay strings.
+  // js-yaml turns `expireAt: 2020-01-01` into a Date instance; yaml strings stay strings.
   let expiresAt: number | undefined;
-  if (leaf.expires instanceof Date) expiresAt = leaf.expires.getTime();
-  else if (leaf.expires) expiresAt = Date.parse(leaf.expires);
+  let publishAt: number | undefined;
+
+  if (leaf.expireAt instanceof Date) expiresAt = leaf.expireAt.getTime();
+  else if (leaf.expireAt) expiresAt = Date.parse(leaf.expireAt);
+
+
+  if (leaf.publishAt) publishAt = Date.parse(leaf.publishAt)
+
+
+  if (publishAt !== undefined && publishAt > Date.now()) return c.html(page425, 425);
   if (expiresAt !== undefined && expiresAt < Date.now()) return c.html(page410, 410);
 
   c.set("leaf", leaf);

@@ -5,7 +5,7 @@
 // Keys are the file basenames — they must match the `name:` fields in links.yaml.
 
 import { readdirSync, statSync } from "node:fs";
-import { join, basename, extname } from "node:path";
+import { join, extname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 
@@ -22,7 +22,13 @@ const MIME = {
   ".jpg": "image/jpeg",
 };
 
-const files = readdirSync(uploadsDir).filter((f) => statSync(join(uploadsDir, f)).isFile());
+// Walk uploads/ recursively; the RELATIVE path becomes the object key.
+// uploads/ah1105-fall2026/mid-term-A.pdf → key "ah1105-fall2026/mid-term-A.pdf"
+// (R2 has no folders — "/" in a key is just a character; the key must match
+// links.yaml's `name:` byte-for-byte.)
+const files = readdirSync(uploadsDir, { recursive: true })
+  .map((f) => f.replace(/\\/g, "/")) // windows-safe separators in keys
+  .filter((f) => statSync(join(uploadsDir, f)).isFile());
 if (files.length === 0) {
   console.log("uploads/ is empty — nothing to sync.");
   process.exit(0);
@@ -30,15 +36,16 @@ if (files.length === 0) {
 
 let failed = 0;
 for (const file of files) {
-  const type = MIME[extname(file).toLowerCase()] ?? "application/octet-stream";
+  const key = file;
+  const type = MIME[extname(key).toLowerCase()] ?? "application/octet-stream";
   const args = [
-    "r2", "object", "put", `${BUCKET}/${basename(file)}`,
+    "r2", "object", "put", `${BUCKET}/${key}`,
     "--file", join(uploadsDir, file),
     "--content-type", type,
   ];
   if (!remote) args.push("--local");
 
-  console.log(`→ ${BUCKET}/${basename(file)} (${type}${remote ? ", remote" : ", local"})`);
+  console.log(`→ ${BUCKET}/${key} (${type}${remote ? ", remote" : ", local"})`);
   const result = spawnSync(wranglerBin, args, { stdio: "inherit" });
   if (result.status !== 0) failed++;
 }

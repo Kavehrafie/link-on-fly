@@ -1,44 +1,44 @@
-type Branch = {
-  title: string;
-  slug: string;
-  description?: string;
-  children: (Branch | Leaf)[];
-};
-
-type Target = {type: "r2", name: string} | {type: "url", src: string};
-
-type Leaf = {
-  title: string;
-  slug: string;
-  description?: string;
-  expires?: Date | string; // js-yaml parses ISO dates into Date instances — handle both
-  targets: Target[];
-};
-
-
-type Node = Branch | Leaf;
-type FlatTree = Map<string, Leaf>;
+import type { FlatLeaf, FlatTree, Leaf, Node, Target } from "./schema";
 
 function flattenTree(tree: Node[], prefix: string = ""): FlatTree {
-  let flatTree = new Map<string, Leaf>();
+  let flatTree = new Map<string, FlatLeaf>();
 
-  walkIntoTree(tree, "/", (leaf, prefix) => {
-    flatTree.set(`${prefix}${leaf.slug}`, leaf);
-  });
+  walkIntoTree(
+    tree,
+    {
+      tz: "UTC",
+      prefix: "/",
+      callback: (leaf, prefix, tz) => {
+        flatTree.set(`${prefix}${leaf.slug}`, { ...leaf, timezone: tz });
+      }
+    }
+  );
 
   return flatTree;
 }
 
+interface WalkIntoOpts {
+  tz: string;
+  prefix: string;
+  callback: (leaf: Leaf, prefix: string, tz: string) => void
+}
+
 function walkIntoTree(
   tree: Node[],
-  prefix: string = "",
-  callback: (leaf: Leaf, prefix: string) => void,
+  opts: WalkIntoOpts
 ) {
   for (const node of tree) {
+    let tz = node?.timezone ?? opts.tz
+
     if ("children" in node) {
-      walkIntoTree(node.children, prefix + node.slug + '/', callback);
+      walkIntoTree(node.children,
+        {
+          prefix: opts.prefix + node.slug + '/',
+          tz,
+          callback: opts.callback
+        })
     } else {
-      callback(node, prefix);
+      opts.callback(node, opts.prefix ?? "", tz || "UTC");
     }
   }
 }
@@ -50,12 +50,18 @@ function pickTargetIndex(targets: Target[], rng: () => number = Math.random): nu
   return Math.floor(rng() * targets.length);
 }
 
+function todayIn(tz: string, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(new Date())
+}
+
+
 export {
   pickTargetIndex,
-  type Target,
   flattenTree,
-  type Branch,
-  type Leaf,
-  type Node,
-  type FlatTree,
+  todayIn
 }

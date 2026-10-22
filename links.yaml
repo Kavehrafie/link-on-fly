@@ -1,24 +1,27 @@
 - title: Fall 2026
   slug: fall-2026
   description: A link to the ah1105 course in the fall of 2026.
+  locale: en-US
   children:
     - title: ah1105
       slug: ah1105
+      timezone: America/Edmonton
       description: A link to the ah1105 course in the fall of 2026.
       children:
         - title: midterm exam
           slug: midterm-exam
           description: A link to the midterm exam for the ah1105 course in the fall of 2026.
+          expireAt: 2026-10-25
+          publishAt: 2026-10-23
           targets:
             - type: r2
-              name: exam-set-a.pdf
+              name: ah1105-fall2026/mid-term-A.pdf
             - type: r2
-              name: exam-set-b.pdf
+              name: ah1105-fall2026/mid-term-B.pdf
             - type: r2
-              name: exam-set-c.pdf
-            # test fixture for the missing-object → 404 checkpoint; safe to delete
+              name: ah1105-fall2026/mid-term-C.pdf
             - type: r2
-              name: exam-set-missing.pdf
+              name: ah1105-fall2026/mid-term-D.pdf
         - title: course resources
           slug: resources
           description: Useful external resources for the ah1105 course.
@@ -33,7 +36,7 @@
         - title: archived exam (expired)
           slug: archived-exam
           description: Expired on purpose so the 410 path can be tested.
-          expires: 2020-01-01
+          expireAt: 2020-01-01
           targets:
             - type: url
               src: https://example.com/archived

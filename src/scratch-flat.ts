@@ -1,6 +1,7 @@
 import { load } from 'js-yaml';
-import {readFileSync} from "node:fs"
-import {flattenTree, type Node} from './lib.ts'
+import { readFileSync } from "node:fs"
+import { flattenTree } from './lib.ts'
+import type { Node } from './schema.js'
 
 try {
   const yamlData = readFileSync(new URL('../links.yaml', import.meta.url), 'utf8');
