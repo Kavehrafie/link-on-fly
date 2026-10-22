@@ -30,6 +30,10 @@ A Cloudflare Worker (Hono) that serves as an access point to assets/links. Real 
 
 Current end state: guard middleware (lookup, 404/410 short-circuits, `c.set` stash) → serving handler (sticky cookie pick → url 302 / r2 stream with attachment headers). Sync script pushes uploads/ → bucket (`bun run sync:r2`, `--remote` for prod). Test fixtures in links.yaml: `archived-exam` (expired → 410) and `exam-set-missing.pdf` (missing object → 404) — removable once L7 tests exist.
 
+## Lesson 4 spec REVISED (2026-10-22) — crown-only timezone/locale
+
+tutorial/04 rewritten ahead of code (design settled with user): zod schema lives in `src/schema.ts` (`strictObject` everywhere — unknown keys are boot errors); `timezone:`/`locale:` are **crown-only**: allowed only on top-level entries (positional rule — a crown may be an institution, project, or one-off page), inherited below, no per-node override; UTC/en-CA fallbacks exist but flattenTree throws if a defaulted timezone would decide a leaf's `publishAt`/`expireAt` ("defaults may exist but must never be load-bearing"). URLs now carry the crown slug (`/crown/term/class/leaf`); checkpoint table gained strict / load-bearing / two-crown tests. The old "inherited down the tree like slugs, with leaf-level override" framing is retired.
+
 ## Lesson 5 — next: hono/jsx pages
 
 1. Replace the string-imported `404.html`/`410.html` with jsx components: Layout, NotFoundPage, GonePage.

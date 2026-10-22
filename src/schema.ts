@@ -3,7 +3,7 @@
 import z from "zod";
 
 
-function isValidTimeZone(tz: string) {
+function isValidTimeZone(tz: string): boolean {
   try {
     new Intl.DateTimeFormat("en-CA", { timeZone: tz })
     return true
@@ -12,6 +12,34 @@ function isValidTimeZone(tz: string) {
   }
 }
 
+function isValidLocale(tag: string): boolean {
+  try {
+    Intl.getCanonicalLocales(tag);
+    return true;
+  } catch {
+    return false
+  }
+  
+}
+
+const timezoneField = z.string().refine(
+  isValidTimeZone, "must be a valid IANA timezone name"
+)
+const localeField = z.string().refine(
+  isValidLocale, "must be a valid IETF language tag"
+)
+const slugField =  z.string().regex(
+  /^[a-z0-9]+(-[a-z0-9]+)*$/,
+  "lowercase letters, digits, hyphens"
+)
+
+// Accepts js-yaml's Date instances and quoted strings; normalizes both to a
+// plain "YYYY-MM-DD" string. The refine guards the zero-padded shape that the
+// middleware's lexicographic date comparison relies on.
+const isoDate = z
+.union([z.date(), z.string()])
+.transform((d) => (d instanceof Date ? d.toISOString().slice(0, 10) : d))
+.refine((s) => /^\d{4}-\d{2}-\d{2}$/.test(s), "must be a YYYY-MM-DD date");
 
 type Branch = {
   title: string;
@@ -21,15 +49,6 @@ type Branch = {
   local?: string;
   children: (Branch | Leaf)[];
 };
-
-// Accepts js-yaml's Date instances and quoted strings; normalizes both to a
-// plain "YYYY-MM-DD" string. The refine guards the zero-padded shape that the
-// middleware's lexicographic date comparison relies on.
-const isoDate = z
-  .union([z.date(), z.string()])
-  .transform((d) => (d instanceof Date ? d.toISOString().slice(0, 10) : d))
-  .refine((s) => /^\d{4}-\d{2}-\d{2}$/.test(s), "must be a YYYY-MM-DD date");
-
 const targetSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("r2"), name: z.string() }),
   z.object({ type: z.literal("url"), src: z.string() })

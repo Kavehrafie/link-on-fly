@@ -1,5 +1,8 @@
 import type { FlatLeaf, FlatTree, Leaf, Node, Target } from "./schema";
 
+const gateFormatters = new Map<string, Intl.DateTimeFormat>();
+
+
 function flattenTree(tree: Node[], prefix: string = ""): FlatTree {
   let flatTree = new Map<string, FlatLeaf>();
 
@@ -19,16 +22,22 @@ function flattenTree(tree: Node[], prefix: string = ""): FlatTree {
 
 interface WalkIntoOpts {
   tz: string;
+  locale?: string;
   prefix: string;
-  callback: (leaf: Leaf, prefix: string, tz: string) => void
+  onLeaf: (leaf: Leaf, prefix: string,
+    resolved: {
+      timezone: string;
+      locale: string;
+    }) => void
 }
 
 function walkIntoTree(
   tree: Node[],
   opts: WalkIntoOpts
-) {
+): void {
   for (const node of tree) {
     let tz = node?.timezone ?? opts.tz
+    const locale = node?.locale ?? opts.locale;
 
     if ("children" in node) {
       walkIntoTree(node.children,
@@ -50,15 +59,25 @@ function pickTargetIndex(targets: Target[], rng: () => number = Math.random): nu
   return Math.floor(rng() * targets.length);
 }
 
-function todayIn(tz: string, locale: string): string {
-  return new Intl.DateTimeFormat(locale, {
-    timeZone: tz,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
-  }).format(new Date())
+function todayIn(tz: string): string {
+  let fmt = gateFormatters.get(tz);
+  if (!fmt) {
+    fmt = new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    });
+    gateFormatters.set(tz, fmt);
+  }
+  return fmt.format(new Date())
 }
 
+function formatDisplayDate(iso: string, locale: string) : string {
+ return new Intl.DateTimeFormat(locale, {
+  timeZone: "UTC", dateStyle: "long"}).format
+(new Date(iso))
+}
 
 export {
   pickTargetIndex,
